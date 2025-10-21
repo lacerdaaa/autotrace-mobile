@@ -1,50 +1,73 @@
-# Welcome to your Expo app 👋
+# AutoTrace Mobile
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Aplicativo mobile (Expo + React Native) para consumir a API AutoTrace. Ele oferece autenticação com JWT, gerenciamento de veículos, histórico de manutenções, geração/validação de certificados em PDF e resumo geral via dashboard.
 
-## Get started
+## 🌱 Pré-requisitos
 
-1. Install dependencies
+- Node.js 18+
+- Expo CLI (`npx expo --version`)
+- Backend AutoTrace em execução (ou URL acessível)
+
+## ⚙️ Configuração
+
+1. Copie o arquivo `.env.example` (se existir) ou crie um `.env` na raiz do app mobile definindo a variável abaixo. Para ambientes Expo, utilize o prefixo `EXPO_PUBLIC_`:
+
+   ```bash
+   echo "EXPO_PUBLIC_API_URL=http://localhost:3333" > .env
+   ```
+
+   > Em emuladores/dispositivos físicos substitua `localhost` pelo IP da máquina que executa a API.
+
+2. Instale as dependências:
 
    ```bash
    npm install
    ```
 
-2. Start the app
+3. Inicie o app:
 
    ```bash
    npx expo start
    ```
 
-In the output, you'll find options to open the app in a
+   Use as teclas exibidas no terminal para abrir no Android, iOS ou web.
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+## 🧭 Fluxos implementados
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+- **Autenticação:** telas de login e cadastro; sessão persistida via `expo-secure-store`. Interceptação automática de respostas `401` encerra a sessão.
+- **Dashboard:** resumo por veículo com total de manutenções, próxima revisão e status de atraso.
+- **Veículos:** listagem, cadastro, detalhes com sugestões preventivas, upload de foto e histórico de manutenções.
+- **Manutenções:** formulário com upload opcional de documento (PDF/imagem) usando `expo-document-picker`.
+- **Certificados:** geração de PDF (com download + compartilhamento via `expo-file-system` / `expo-sharing`) e validação pública pelo ID.
+- **Perfil:** exibe dados do usuário e permite encerrar a sessão.
 
-## Get a fresh project
+## 📁 Estrutura principal
 
-When you're ready, run:
+- `app/` – rotas file-based com Expo Router (segmentos `/(auth)` e `/(app)`).
+- `contexts/auth-context.tsx` – provider de autenticação.
+- `lib/api/*` – clientes Axios organizados por domínio (auth, veículos, dashboard, certificados).
+- `lib/query-keys.ts` – chaves centralizadas para React Query.
+- `providers/` – provedores globais (React Query + Auth).
+- `constants/config.ts` – configuração de base (URL e chave de armazenamento do token).
 
-```bash
-npm run reset-project
-```
+## 🔌 Comunicação com a API
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+- Axios configurado em `lib/api/client.ts`, anexando token JWT automaticamente.
+- React Query (`@tanstack/react-query`) para cache e revalidação.
+- Uploads (foto/documento) enviados como `multipart/form-data`.
+- Downloads de certificados salvos em cache local (`FileSystem.cacheDirectory`) e compartilháveis.
 
-## Learn more
+## ✅ Scripts úteis
 
-To learn more about developing your project with Expo, look at the following resources:
+- `npm run lint` – analisa o código com o ESLint da Expo.
+- `npm run reset-project` – restaura o template base (não necessário após estrutura pronta).
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+## 📝 Observações
 
-## Join the community
+- Ajuste o valor de `EXPO_PUBLIC_API_URL` conforme o ambiente (dev, staging, produção).
+- Para rodar em dispositivo físico, verifique se a API está acessível pela rede local e habilite HTTPS quando publicar.
+- A camada visual usa estilos básicos; personalize conforme seu design system.
 
-Join our community of developers creating universal apps.
+---
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+Qualquer dúvida ou melhoria, siga editando as rotas em `app/` e os serviços em `lib/api/`. Boas contribuições! 💜

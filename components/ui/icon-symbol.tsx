@@ -18,6 +18,10 @@ const MAPPING = {
   'paperplane.fill': 'send',
   'chevron.left.forwardslash.chevron.right': 'code',
   'chevron.right': 'chevron-right',
+  speedometer: 'speed',
+  'car.fill': 'directions-car',
+  'doc.richtext': 'description',
+  'person.crop.circle': 'person',
 } as IconMapping;
 
 /**
