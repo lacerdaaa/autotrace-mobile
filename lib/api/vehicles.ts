@@ -1,4 +1,6 @@
 import { api } from './client';
+import { requestPresignedUpload } from './uploads';
+import { uploadFileToPresignedUrl } from '../uploads';
 import {
   MaintenanceRecord,
   Vehicle,
@@ -24,6 +26,12 @@ export interface UpdateVehiclePhotoPayload {
   mimeType: string;
 }
 
+export interface MaintenanceDocumentPayload {
+  uri: string;
+  name: string;
+  type: string;
+}
+
 export interface CreateMaintenancePayload {
   vehicleId: string;
   serviceType: string;
@@ -31,11 +39,7 @@ export interface CreateMaintenancePayload {
   odometer: number;
   workshop: string;
   notes?: string;
-  document?: {
-    uri: string;
-    name: string;
-    type: string;
-  } | null;
+  document?: MaintenanceDocumentPayload | null;
 }
 
 export const listVehicles = async (): Promise<Vehicle[]> => {
@@ -59,17 +63,16 @@ export const uploadVehiclePhoto = async ({
   fileName,
   mimeType,
 }: UpdateVehiclePhotoPayload): Promise<Vehicle> => {
-  const formData = new FormData();
-  formData.append('photo', {
-    uri,
-    name: fileName,
-    type: mimeType,
-  } as unknown as any);
+  const upload = await requestPresignedUpload({
+    category: 'vehicle-photo',
+    originalName: fileName,
+    contentType: mimeType,
+  });
 
-  const { data } = await api.post<VehicleResponse>(`/vehicles/${vehicleId}/photo`, formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data',
-    },
+  await uploadFileToPresignedUrl({ uri, upload });
+
+  const { data } = await api.post<VehicleResponse>(`/vehicles/${vehicleId}/photo`, {
+    fileName: upload.fileName,
   });
 
   return data.vehicle;
@@ -80,33 +83,24 @@ export const createMaintenanceRecord = async (
 ): Promise<MaintenanceRecord> => {
   const { vehicleId, document, ...rest } = payload;
 
-  const formData = new FormData();
-
-  Object.entries(rest).forEach(([key, value]) => {
-    if (value === undefined || value === null) {
-      return;
-    }
-
-    formData.append(key, String(value));
-  });
-
+  let documentFileName: string | undefined;
   if (document) {
-    formData.append('document', {
-      uri: document.uri,
-      name: document.name,
-      type: document.type,
-    } as unknown as any);
+    const upload = await requestPresignedUpload({
+      category: 'maintenance-document',
+      originalName: document.name,
+      contentType: document.type,
+    });
+
+    await uploadFileToPresignedUrl({ uri: document.uri, upload });
+    documentFileName = upload.fileName;
   }
 
-  const { data } = await api.post<{ maintenance: MaintenanceRecord }>(
-    `/vehicles/${vehicleId}/maintenance`,
-    formData,
-    {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    },
-  );
+  const body = {
+    ...rest,
+    ...(documentFileName ? { documentFileName } : {}),
+  };
+
+  const { data } = await api.post<{ maintenance: MaintenanceRecord }>(`/vehicles/${vehicleId}/maintenance`, body);
 
   return data.maintenance;
 };

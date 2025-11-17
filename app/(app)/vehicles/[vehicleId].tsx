@@ -18,7 +18,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
-import { ApiError, getApiErrorMessage } from '@/lib/api/client';
+import { getApiErrorMessage, isApiError } from '@/lib/api/client';
 import { getVehicleDetails, uploadVehiclePhoto } from '@/lib/api/vehicles';
 import { MaintenanceRecord, MaintenanceSuggestions } from '@/lib/api/types';
 import { queryKeys } from '@/lib/query-keys';
@@ -128,8 +128,13 @@ export default function VehicleDetailsScreen() {
       await queryClient.invalidateQueries({ queryKey: vehicleQueryKey });
       await queryClient.invalidateQueries({ queryKey: queryKeys.vehicles.root });
     },
-    onError: (error: ApiError) => {
-      Alert.alert('Erro ao enviar foto', getApiErrorMessage(error));
+    onError: (error) => {
+      const message = isApiError(error)
+        ? getApiErrorMessage(error)
+        : error instanceof Error
+          ? error.message
+          : 'Não foi possível enviar a foto.';
+      Alert.alert('Erro ao enviar foto', message);
     },
   });
 

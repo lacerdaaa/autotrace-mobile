@@ -61,3 +61,5 @@ export const getApiErrorMessage = (error: ApiError) => {
 
   return 'Erro inesperado ao comunicar com a API.';
 };
+
+export const isApiError = (error: unknown): error is ApiError => axios.isAxiosError(error);

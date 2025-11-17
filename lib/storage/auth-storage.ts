@@ -73,8 +73,8 @@ export const removeToken = async () => {
       await SecureStore.deleteItemAsync(TOKEN_KEY);
     } catch {
       // Fallthrough to ensure fallback store is cleared.
-    }
-  }
+    };
+  };
 
   fallbackSetToken(null);
 };
@@ -88,7 +88,7 @@ export const getToken = async () => {
       fallbackSetToken(token);
     }
     return token;
-  }
+  };
 
   return fallbackGetToken() ?? null;
 };

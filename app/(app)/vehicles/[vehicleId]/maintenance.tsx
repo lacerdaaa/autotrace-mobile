@@ -17,15 +17,11 @@ import {
 import { Button } from '@/components/ui/button';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
-import { ApiError, getApiErrorMessage } from '@/lib/api/client';
-import { createMaintenanceRecord } from '@/lib/api/vehicles';
+import { getApiErrorMessage, isApiError } from '@/lib/api/client';
+import { createMaintenanceRecord, type MaintenanceDocumentPayload } from '@/lib/api/vehicles';
 import { queryKeys } from '@/lib/query-keys';
 
-type DocumentSelection = {
-  uri: string;
-  name: string;
-  type: string;
-};
+type DocumentSelection = MaintenanceDocumentPayload;
 
 type FormState = {
   serviceType: string;
@@ -59,8 +55,13 @@ export default function NewMaintenanceScreen() {
       await queryClient.invalidateQueries({ queryKey: queryKeys.vehicles.detail(vehicleId) });
       router.replace(`/(app)/vehicles/${vehicleId}`);
     },
-    onError: (error: ApiError) => {
-      Alert.alert('Erro ao salvar manutenção', getApiErrorMessage(error));
+    onError: (error) => {
+      const message = isApiError(error)
+        ? getApiErrorMessage(error)
+        : error instanceof Error
+          ? error.message
+          : 'Não foi possível salvar a manutenção.';
+      Alert.alert('Erro ao salvar manutenção', message);
     },
   });
 
