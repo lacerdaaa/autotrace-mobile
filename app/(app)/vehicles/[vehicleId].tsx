@@ -3,17 +3,8 @@ import * as WebBrowser from 'expo-web-browser';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useMemo } from 'react';
-import {
-  Alert,
-  FlatList,
-  Image,
-  RefreshControl,
-  SafeAreaView,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { Alert, FlatList, Image, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/ui/button';
 import { Colors } from '@/constants/theme';
@@ -121,6 +112,8 @@ export default function VehicleDetailsScreen() {
   const vehicle = data?.vehicle;
   const maintenances = data?.maintenances ?? [];
   const suggestions = data?.suggestions;
+  const photos = data?.photos ?? [];
+  const coverPhotoUrl = photos[0]?.url ?? vehicle?.photoUrl ?? null;
 
   const photoMutation = useMutation({
     mutationFn: uploadVehiclePhoto,
@@ -142,28 +135,40 @@ export default function VehicleDetailsScreen() {
     await WebBrowser.openBrowserAsync(url);
   };
 
+  const handleOpenPhoto = async (url: string) => {
+    await WebBrowser.openBrowserAsync(url);
+  };
+
   const handlePickPhoto = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      quality: 0.7,
+      mediaTypes: 'images',
+      allowsMultipleSelection: true,
+      quality: 0.8,
     });
 
     if (result.canceled) {
       return;
     }
 
-    const asset = result.assets[0];
-    const mimeType = asset.mimeType ?? 'image/jpeg';
-    const fileName =
-      asset.fileName ?? `vehicle-${vehicleId}-${Date.now()}.${mimeType.split('/')[1] ?? 'jpg'}`.replace(/[^a-zA-Z0-9.-]/g, '');
+    const assets = result.assets ?? [];
+    for (const asset of assets) {
+      const mimeType = asset.mimeType ?? 'image/jpeg';
+      const extension = mimeType.split('/')[1] ?? 'jpg';
+      const fileName = (
+        asset.fileName ?? `vehicle-${vehicleId}-${Date.now()}-${Math.random().toString(36).slice(2)}.${extension}`
+      ).replace(/[^a-zA-Z0-9.-]/g, '');
 
-    photoMutation.mutate({
-      vehicleId,
-      uri: asset.uri,
-      mimeType,
-      fileName,
-    });
+      try {
+        await photoMutation.mutateAsync({
+          vehicleId,
+          uri: asset.uri,
+          mimeType,
+          fileName,
+        });
+      } catch {
+        break;
+      }
+    }
   };
 
   const handleAddMaintenance = () => {
@@ -202,9 +207,9 @@ export default function VehicleDetailsScreen() {
               </Text>
               <Text style={[styles.plate, { color: colors.secondary }]}>{vehicle.plate.toUpperCase()}</Text>
             </View>
-            {vehicle.photoUrl ? (
+            {coverPhotoUrl ? (
               <Image
-                source={{ uri: vehicle.photoUrl }}
+                source={{ uri: coverPhotoUrl }}
                 style={{ width: 96, height: 96, borderRadius: 12, backgroundColor: colors.surfaceMuted }}
               />
             ) : null}
@@ -212,7 +217,7 @@ export default function VehicleDetailsScreen() {
 
           <View style={styles.actionsRow}>
             <Button
-              label={photoMutation.isPending ? 'Enviando...' : vehicle.photoUrl ? 'Atualizar foto' : 'Enviar foto'}
+              label={photoMutation.isPending ? 'Enviando...' : 'Adicionar foto'}
               onPress={handlePickPhoto}
               loading={photoMutation.isPending}
               variant="ghost"
@@ -225,6 +230,29 @@ export default function VehicleDetailsScreen() {
               style={{ flex: 1 }}
             />
           </View>
+        </View>
+
+        <View style={{ gap: 12 }}>
+          <Text style={[styles.sectionHeading, { color: colors.text }]}>Galeria</Text>
+          {photos.length ? (
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.photoGallery}
+            >
+              {photos.map((photo) => (
+                <Pressable
+                  key={photo.id}
+                  onPress={() => handleOpenPhoto(photo.url)}
+                  style={({ pressed }) => [{ opacity: pressed ? 0.8 : 1 }]}
+                >
+                  <Image source={{ uri: photo.url }} style={styles.photoThumb} />
+                </Pressable>
+              ))}
+            </ScrollView>
+          ) : (
+            <Text style={{ color: colors.textMuted }}>Nenhuma foto enviada ainda.</Text>
+          )}
         </View>
 
         <View style={{ gap: 12 }}>
@@ -292,6 +320,10 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: '700',
   },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+  },
   sectionCard: {
     borderWidth: 1,
     borderRadius: 18,
@@ -311,5 +343,17 @@ const styles = StyleSheet.create({
   maintenanceTitle: {
     fontSize: 16,
     fontWeight: '600',
+  },
+  photoGallery: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingVertical: 4,
+  },
+  photoThumb: {
+    width: 120,
+    height: 120,
+    borderRadius: 12,
+    backgroundColor: '#f2f2f2',
   },
 });

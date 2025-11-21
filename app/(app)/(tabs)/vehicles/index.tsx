@@ -1,7 +1,8 @@
 import { useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link, router } from 'expo-router';
-import { FlatList, Pressable, RefreshControl, SafeAreaView, StyleSheet, Text, View } from 'react-native';
+import { FlatList, Image, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/ui/button';
 import { Colors } from '@/constants/theme';
@@ -31,16 +32,27 @@ export default function VehiclesScreen() {
             borderColor: colors.border,
           },
         ]}>
-        <Text style={[styles.cardTitle, { color: colors.text }]}>
-          {item.manufacturer} {item.model}
-        </Text>
-        <Text style={[styles.cardSubtitle, { color: colors.textMuted }]}>
-          {item.category} • {item.year}
-        </Text>
-        <Text style={[styles.cardBadge, { color: colors.secondary }]}>{item.plate}</Text>
-        <Text style={{ color: colors.textMuted }}>
-          Média mensal: <Text style={{ color: colors.text }}>{item.averageMonthlyKm.toLocaleString()} km</Text>
-        </Text>
+        <View style={styles.cardHeader}>
+          <View style={{ flex: 1, gap: 6 }}>
+            <Text style={[styles.cardTitle, { color: colors.text }]}>
+              {item.manufacturer} {item.model}
+            </Text>
+            <Text style={[styles.cardSubtitle, { color: colors.textMuted }]}>
+              {item.category} • {item.year}
+            </Text>
+            <Text style={[styles.cardBadge, { color: colors.secondary }]}>{item.plate}</Text>
+            <Text style={{ color: colors.textMuted }}>
+              Média mensal: <Text style={{ color: colors.text }}>{item.averageMonthlyKm.toLocaleString()} km</Text>
+            </Text>
+          </View>
+          {item.photoUrl ? (
+            <Image
+              source={{ uri: item.photoUrl }}
+              style={[styles.cardPhoto, { borderColor: colors.border }]}
+              resizeMode="cover"
+            />
+          ) : null}
+        </View>
       </Pressable>
     ),
     [colors],
@@ -103,6 +115,11 @@ const styles = StyleSheet.create({
     gap: 6,
     marginBottom: 12,
   },
+  cardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+  },
   cardTitle: {
     fontSize: 18,
     fontWeight: '600',
@@ -114,6 +131,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
     letterSpacing: 1.5,
     fontWeight: '700',
+  },
+  cardPhoto: {
+    width: 84,
+    height: 84,
+    borderRadius: 12,
+    borderWidth: 1,
+    backgroundColor: '#f2f2f2',
   },
   empty: {
     flex: 1,

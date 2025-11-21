@@ -1,4 +1,4 @@
-import * as FileSystem from 'expo-file-system';
+import { File } from 'expo-file-system';
 
 import { Config } from '@/constants/config';
 import type { PresignedUpload } from './api/uploads';
@@ -17,13 +17,42 @@ const resolveUploadUrl = (uploadUrl: string): string => {
 export const uploadFileToPresignedUrl = async (params: { uri: string; upload: PresignedUpload }): Promise<void> => {
   const targetUrl = resolveUploadUrl(params.upload.uploadUrl);
 
-  const result = await FileSystem.uploadAsync(targetUrl, params.uri, {
-    httpMethod: params.upload.uploadMethod,
-    headers: params.upload.uploadHeaders,
+  console.info('[upload] iniciando envio para URL pré-assinada', {
+    fileName: params.upload.fileName,
+    targetUrl: targetUrl.split('?')[0],
+    method: params.upload.uploadMethod,
   });
 
-  if (result.status < 200 || result.status >= 300) {
-    const errorMessage = result.body || `Upload falhou com status ${result.status}`;
-    throw new Error(errorMessage);
+  const file = new File(params.uri);
+  const fileBuffer = await file.arrayBuffer();
+  const contentLength = fileBuffer.byteLength;
+
+  console.info('[upload] arquivo lido', {
+    fileName: params.upload.fileName,
+    size: contentLength,
+  });
+
+  const response = await fetch(targetUrl, {
+    method: params.upload.uploadMethod,
+    headers: {
+      ...params.upload.uploadHeaders,
+      'Content-Length': String(contentLength),
+    },
+    body: fileBuffer,
+  });
+
+  if (!response.ok) {
+    const errorMessage = await response.text();
+    console.error('[upload] falha ao enviar arquivo', {
+      fileName: params.upload.fileName,
+      status: response.status,
+      body: errorMessage,
+    });
+    throw new Error(errorMessage || `Upload falhou com status ${response.status}`);
   }
+
+  console.info('[upload] arquivo enviado com sucesso', {
+    fileName: params.upload.fileName,
+    publicUrl: params.upload.publicUrl,
+  });
 };

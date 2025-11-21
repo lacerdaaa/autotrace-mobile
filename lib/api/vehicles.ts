@@ -4,6 +4,7 @@ import { uploadFileToPresignedUrl } from '../uploads';
 import {
   MaintenanceRecord,
   Vehicle,
+  VehiclePhoto,
   VehicleResponse,
   VehiclesResponse,
   VehicleWithDetails,
@@ -57,12 +58,17 @@ export const createVehicle = async (payload: CreateVehiclePayload): Promise<Vehi
   return data.vehicle;
 };
 
+type VehiclePhotoResponse = {
+  vehicle: Vehicle;
+  photo: VehiclePhoto;
+};
+
 export const uploadVehiclePhoto = async ({
   vehicleId,
   uri,
   fileName,
   mimeType,
-}: UpdateVehiclePhotoPayload): Promise<Vehicle> => {
+}: UpdateVehiclePhotoPayload): Promise<VehiclePhoto> => {
   const upload = await requestPresignedUpload({
     category: 'vehicle-photo',
     originalName: fileName,
@@ -71,11 +77,11 @@ export const uploadVehiclePhoto = async ({
 
   await uploadFileToPresignedUrl({ uri, upload });
 
-  const { data } = await api.post<VehicleResponse>(`/vehicles/${vehicleId}/photo`, {
+  const { data } = await api.post<VehiclePhotoResponse>(`/vehicles/${vehicleId}/photo`, {
     fileName: upload.fileName,
   });
 
-  return data.vehicle;
+  return data.photo;
 };
 
 export const createMaintenanceRecord = async (

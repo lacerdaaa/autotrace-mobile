@@ -26,6 +26,14 @@ export interface Vehicle {
   updatedAt: string;
 }
 
+export interface VehiclePhoto {
+  id: string;
+  vehicleId: string;
+  fileName: string;
+  url: string;
+  createdAt: string;
+}
+
 export interface MaintenanceRecord {
   id: string;
   vehicleId: string;
@@ -59,6 +67,7 @@ export interface MaintenanceSuggestions {
 
 export interface VehicleWithDetails {
   vehicle: Vehicle;
+  photos: VehiclePhoto[];
   maintenances: MaintenanceRecord[];
   suggestions: MaintenanceSuggestions;
 }

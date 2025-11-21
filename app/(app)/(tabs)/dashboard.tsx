@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { FlatList, RefreshControl, SafeAreaView, StyleSheet, Text, View } from 'react-native';
+import { FlatList, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';

@@ -20,11 +20,32 @@ export const requestPresignedUpload = async (params: {
   originalName: string;
   contentType: string;
 }): Promise<PresignedUpload> => {
-  const { data } = await api.post<PresignResponse>('/uploads/presign', {
+  console.info('[upload] solicitando presign', {
     category: params.category,
     originalName: params.originalName,
     contentType: params.contentType,
   });
 
-  return data.upload;
+  try {
+    const { data } = await api.post<PresignResponse>(
+      '/uploads/presign',
+      {
+        category: params.category,
+        originalName: params.originalName,
+        contentType: params.contentType,
+      },
+      { timeout: 30_000 },
+    );
+
+    console.info('[upload] presign concluído', {
+      category: params.category,
+      fileName: data.upload.fileName,
+      expiresAt: data.upload.expiresAt,
+    });
+
+    return data.upload;
+  } catch (error) {
+    console.error('[upload] erro ao obter presign', error);
+    throw error;
+  }
 };
