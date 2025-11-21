@@ -82,7 +82,9 @@ export interface VehiclesResponse {
 
 export interface DashboardSummaryItem {
   vehicleId: string;
-  vehiclePlate?: string;
+  plate: string;
+  manufacturer: string;
+  model: string;
   totalMaintenances: number;
   lastMaintenanceDate: string | null;
   nextMaintenanceKm: number | null;

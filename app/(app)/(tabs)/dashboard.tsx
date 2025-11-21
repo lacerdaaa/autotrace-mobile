@@ -31,7 +31,10 @@ export default function DashboardScreen() {
             borderColor: colors.border,
           },
         ]}>
-        <Text style={[styles.cardTitle, { color: colors.text }]}>Veículo: {item.vehiclePlate ?? item.vehicleId}</Text>
+        <Text style={[styles.cardTitle, { color: colors.text }]}>
+          {item.manufacturer} {item.model}
+        </Text>
+        <Text style={[styles.cardSubtitle, { color: colors.textMuted }]}>{item.plate}</Text>
         <Text style={{ color: colors.textMuted }}>
           Total de manutenções: <Text style={{ color: colors.text }}>{item.totalMaintenances}</Text>
         </Text>
@@ -107,6 +110,9 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontSize: 18,
     fontWeight: '600',
+  },
+  cardSubtitle: {
+    fontSize: 14,
   },
   empty: {
     paddingVertical: 48,

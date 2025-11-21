@@ -1,4 +1,4 @@
-import * as FileSystem from 'expo-file-system';
+import { File, Paths } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 
 import { Config } from '@/constants/config';
@@ -13,15 +13,15 @@ export const validateCertificate = async (certificateId: string): Promise<Certif
 export const downloadCertificatePdf = async (vehicleId: string, token: string) => {
   const url = `${Config.apiBaseUrl}/certificates/${vehicleId}`;
   const fileName = `certificate-${vehicleId}-${Date.now()}.pdf`;
-  const fileUri = `${FileSystem.cacheDirectory}${fileName}`;
+  const targetFile = new File(Paths.cache, fileName);
 
-  const { uri } = await FileSystem.downloadAsync(url, fileUri, {
+  const downloadedFile = await File.downloadFileAsync(url, targetFile, {
     headers: {
       Authorization: `Bearer ${token}`,
     },
   });
 
-  return uri;
+  return downloadedFile.uri;
 };
 
 export const shareCertificate = async (fileUri: string) => {
