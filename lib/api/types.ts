@@ -85,6 +85,11 @@ export interface DashboardSummaryItem {
   plate: string;
   manufacturer: string;
   model: string;
+  category: VehicleCategory;
+  averageMonthlyKm: number;
+  estimatedCurrentKm: number;
+  kmToNext: number;
+  estimatedDueDate: string | null;
   totalMaintenances: number;
   lastMaintenanceDate: string | null;
   nextMaintenanceKm: number | null;

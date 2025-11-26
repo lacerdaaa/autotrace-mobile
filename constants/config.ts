@@ -1,4 +1,4 @@
-const DEFAULT_API_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://192.168.15.7:3001';
+const DEFAULT_API_URL = 'http://172.20.10.2:3001';
 
 export const Config = {
   apiBaseUrl: DEFAULT_API_URL,

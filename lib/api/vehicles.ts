@@ -63,6 +63,15 @@ type VehiclePhotoResponse = {
   photo: VehiclePhoto;
 };
 
+type DeleteVehiclePhotoResponse = {
+  deletedPhotoId: string;
+  vehicle: Vehicle;
+};
+
+type DeleteVehicleResponse = {
+  deletedVehicleId: string;
+};
+
 export const uploadVehiclePhoto = async ({
   vehicleId,
   uri,
@@ -82,6 +91,14 @@ export const uploadVehiclePhoto = async ({
   });
 
   return data.photo;
+};
+
+export const deleteVehiclePhoto = async (vehicleId: string, photoId: string): Promise<void> => {
+  await api.delete<DeleteVehiclePhotoResponse>(`/vehicles/${vehicleId}/photo/${photoId}`);
+};
+
+export const deleteVehicle = async (vehicleId: string): Promise<void> => {
+  await api.delete<DeleteVehicleResponse>(`/vehicles/${vehicleId}`);
 };
 
 export const createMaintenanceRecord = async (

@@ -51,6 +51,7 @@ export default function NewVehicleScreen() {
     mutationFn: createVehicle,
     onSuccess: async (vehicle) => {
       await queryClient.invalidateQueries({ queryKey: queryKeys.vehicles.root });
+      await queryClient.invalidateQueries({ queryKey: queryKeys.dashboard });
       router.replace(`/(app)/vehicles/${vehicle.id}`);
     },
     onError: (error: ApiError) => {

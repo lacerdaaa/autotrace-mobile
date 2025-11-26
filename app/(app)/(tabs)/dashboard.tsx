@@ -10,6 +10,22 @@ import { DashboardSummaryItem } from '@/lib/api/types';
 import { queryKeys } from '@/lib/query-keys';
 
 const formatDate = (value: string | null) => (value ? new Date(value).toLocaleDateString() : 'Sem registro');
+const formatEstimatedDate = (value: string | null) =>
+  value ? new Date(value).toLocaleDateString() : 'Sem estimativa';
+const formatKm = (value: number | null | undefined) =>
+  typeof value === 'number' ? `${value.toLocaleString()} km` : 'Não definido';
+const formatCategory = (value: DashboardSummaryItem['category']) => {
+  switch (value) {
+    case 'car':
+      return 'Carro';
+    case 'motorcycle':
+      return 'Motocicleta';
+    case 'truck':
+      return 'Caminhão';
+    default:
+      return 'Outro';
+  }
+};
 
 export default function DashboardScreen() {
   const scheme = useColorScheme() === 'dark' ? 'dark' : 'light';
@@ -53,6 +69,28 @@ export default function DashboardScreen() {
             fontWeight: '600',
           }}>
           {item.overdue ? 'Manutenção em atraso' : 'Cronograma em dia'}
+        </Text>
+        <Text style={{ color: colors.textMuted }}>
+          Categoria:{' '}
+          <Text style={{ color: colors.text, fontWeight: '600' }}>
+            {formatCategory(item.category)} | {formatKm(item.estimatedCurrentKm)} estimados
+          </Text>
+        </Text>
+        <Text style={{ color: colors.textMuted }}>
+          Média mensal:{' '}
+          <Text style={{ color: colors.text }}>
+            {formatKm(item.averageMonthlyKm)} / mês
+          </Text>
+        </Text>
+        <Text style={{ color: colors.textMuted }}>
+          Km até a próxima revisão:{' '}
+          <Text style={{ color: colors.text }}>
+            {item.overdue ? 'Atrasado' : formatKm(item.kmToNext)}
+          </Text>
+        </Text>
+        <Text style={{ color: colors.textMuted }}>
+          Data estimada:{' '}
+          <Text style={{ color: colors.text }}>{formatEstimatedDate(item.estimatedDueDate)}</Text>
         </Text>
       </View>
     ),

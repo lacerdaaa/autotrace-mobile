@@ -6,8 +6,8 @@ let authToken: string | null = null;
 let unauthorizedHandler: (() => void) | null = null;
 
 export const api = axios.create({
-  baseURL: Config.apiBaseUrl,
-  timeout: 15_000,
+  baseURL: 'http://172.20.10.2:3001',
+  timeout: 20_000,
 });
 
 api.interceptors.request.use((config) => {

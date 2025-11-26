@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { getApiErrorMessage, isApiError } from '@/lib/api/client';
-import { getVehicleDetails, uploadVehiclePhoto } from '@/lib/api/vehicles';
+import { deleteVehicle, deleteVehiclePhoto, getVehicleDetails, uploadVehiclePhoto } from '@/lib/api/vehicles';
 import { MaintenanceRecord, MaintenanceSuggestions } from '@/lib/api/types';
 import { queryKeys } from '@/lib/query-keys';
 
@@ -131,6 +131,42 @@ export default function VehicleDetailsScreen() {
     },
   });
 
+  const deletePhotoMutation = useMutation({
+    mutationFn: (photoId: string) => deleteVehiclePhoto(vehicleId, photoId),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: vehicleQueryKey });
+      await queryClient.invalidateQueries({ queryKey: queryKeys.vehicles.root });
+    },
+    onError: (error) => {
+      const message = isApiError(error)
+        ? getApiErrorMessage(error)
+        : error instanceof Error
+          ? error.message
+          : 'Não foi possível excluir a foto.';
+      Alert.alert('Erro ao excluir foto', message);
+    },
+  });
+
+  const deleteVehicleMutation = useMutation({
+    mutationFn: () => deleteVehicle(vehicleId),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: queryKeys.vehicles.root }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.dashboard }),
+      ]);
+      await queryClient.removeQueries({ queryKey: vehicleQueryKey });
+      router.replace('/(app)/(tabs)/vehicles');
+    },
+    onError: (error) => {
+      const message = isApiError(error)
+        ? getApiErrorMessage(error)
+        : error instanceof Error
+          ? error.message
+          : 'Não foi possível excluir o veículo.';
+      Alert.alert('Erro ao excluir veículo', message);
+    },
+  });
+
   const handleOpenDocument = async (url: string) => {
     await WebBrowser.openBrowserAsync(url);
   };
@@ -169,6 +205,32 @@ export default function VehicleDetailsScreen() {
         break;
       }
     }
+  };
+
+  const handleDeletePhoto = (photoId: string) => {
+    Alert.alert('Excluir foto', 'Tem certeza de que deseja excluir esta foto?', [
+      { text: 'Cancelar', style: 'cancel' },
+      {
+        text: 'Excluir',
+        style: 'destructive',
+        onPress: () => deletePhotoMutation.mutate(photoId),
+      },
+    ]);
+  };
+
+  const handleDeleteVehicle = () => {
+    Alert.alert(
+      'Excluir veículo',
+      'Esta ação apagará o veículo, fotos e manutenções vinculadas. Deseja continuar?',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Excluir',
+          style: 'destructive',
+          onPress: () => deleteVehicleMutation.mutate(),
+        },
+      ],
+    );
   };
 
   const handleAddMaintenance = () => {
@@ -221,13 +283,22 @@ export default function VehicleDetailsScreen() {
               onPress={handlePickPhoto}
               loading={photoMutation.isPending}
               variant="ghost"
-              style={{ flex: 1 }}
+              style={styles.actionButton}
             />
             <Button
               label="Registrar manutenção"
               onPress={handleAddMaintenance}
               variant="secondary"
-              style={{ flex: 1 }}
+              style={styles.actionButton}
+              
+            />
+            <Button
+              label={deleteVehicleMutation.isPending ? 'Excluindo...' : 'Excluir veículo'}
+              onPress={handleDeleteVehicle}
+              loading={deleteVehicleMutation.isPending}
+              variant="ghost"
+              style={styles.actionButton}
+              textStyle={{ color: colors.secondary }}
             />
           </View>
         </View>
@@ -238,16 +309,26 @@ export default function VehicleDetailsScreen() {
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.photoGallery}
-            >
+              contentContainerStyle={styles.photoGallery}>
               {photos.map((photo) => (
-                <Pressable
-                  key={photo.id}
-                  onPress={() => handleOpenPhoto(photo.url)}
-                  style={({ pressed }) => [{ opacity: pressed ? 0.8 : 1 }]}
-                >
-                  <Image source={{ uri: photo.url }} style={styles.photoThumb} />
-                </Pressable>
+                <View key={photo.id} style={[styles.photoItem, { borderColor: colors.border }]}>
+                  <Pressable onPress={() => handleOpenPhoto(photo.url)} style={({ pressed }) => [{ opacity: pressed ? 0.85 : 1 }]}>
+                    <Image source={{ uri: photo.url }} style={styles.photoThumb} />
+                  </Pressable>
+                  <Pressable
+                    onPress={() => handleDeletePhoto(photo.id)}
+                    style={({ pressed }) => [
+                      styles.deleteBadge,
+                      {
+                        borderColor: colors.border,
+                        backgroundColor: pressed ? colors.surfaceMuted : colors.surface,
+                      },
+                    ]}>
+                    <Text style={{ color: colors.secondary, fontWeight: '600', fontSize: 12 }}>
+                      {deletePhotoMutation.isPending ? 'Excluindo...' : 'Excluir'}
+                    </Text>
+                  </Pressable>
+                </View>
               ))}
             </ScrollView>
           ) : (
@@ -314,7 +395,13 @@ const styles = StyleSheet.create({
   },
   actionsRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 12,
+    justifyContent: 'center',
+  },
+  actionButton: {
+    minWidth: 180,
+    alignSelf: 'center',
   },
   sectionHeading: {
     fontSize: 20,
@@ -350,10 +437,23 @@ const styles = StyleSheet.create({
     gap: 12,
     paddingVertical: 4,
   },
+  photoItem: {
+    borderWidth: 1,
+    borderRadius: 12,
+    padding: 8,
+    gap: 8,
+  },
   photoThumb: {
     width: 120,
     height: 120,
     borderRadius: 12,
     backgroundColor: '#f2f2f2',
+  },
+  deleteBadge: {
+    alignSelf: 'flex-start',
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
   },
 });
